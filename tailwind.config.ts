@@ -25,16 +25,16 @@ export default {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "#0F172A",
+          DEFAULT: "#2C4BFF",
           foreground: "#FFFFFF",
         },
         secondary: {
-          DEFAULT: "#3B82F6",
+          DEFAULT: "#2B3990",
           foreground: "#FFFFFF",
         },
         accent: {
-          DEFAULT: "#F8FAFC",
-          foreground: "#0F172A",
+          DEFAULT: "#F5F7FF",
+          foreground: "#2C4BFF",
         },
       },
       fontFamily: {
@@ -48,6 +48,10 @@ export default {
       },
       animation: {
         fadeIn: "fadeIn 0.5s ease-in-out",
+      },
+      backgroundImage: {
+        'primary-gradient': 'linear-gradient(90deg, #4461FF 0%, #385AFF 100%)',
+        'primary-gradient-hover': 'linear-gradient(90deg, #385AFF 0%, #4461FF 100%)',
       },
     },
   },

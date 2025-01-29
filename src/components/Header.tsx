@@ -1,4 +1,4 @@
-import { Shield, Globe } from "lucide-react";
+import { Globe } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
@@ -17,11 +17,14 @@ export const Header = () => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <header className="w-full bg-primary py-4">
+    <header className="w-full bg-white py-4 shadow-sm">
       <div className="container flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
-          <Shield className="h-8 w-8 text-white" />
-          <span className="text-xl font-bold text-white">SecureKYC</span>
+          <img 
+            src="/galileo-logo.svg" 
+            alt="Galileo" 
+            className="h-8"
+          />
         </Link>
 
         <div className="flex items-center gap-6">
@@ -29,8 +32,8 @@ export const Header = () => {
             <Link
               to="/kyc"
               className={cn(
-                "text-white/80 hover:text-white transition-colors",
-                isActive("/kyc") && "text-white font-semibold"
+                "text-gray-600 hover:text-primary transition-colors",
+                isActive("/kyc") && "text-primary font-semibold"
               )}
             >
               {t("individual.verification")}
@@ -38,8 +41,8 @@ export const Header = () => {
             <Link
               to="/kyb"
               className={cn(
-                "text-white/80 hover:text-white transition-colors",
-                isActive("/kyb") && "text-white font-semibold"
+                "text-gray-600 hover:text-primary transition-colors",
+                isActive("/kyb") && "text-primary font-semibold"
               )}
             >
               {t("business.verification")}
@@ -47,7 +50,7 @@ export const Header = () => {
           </nav>
 
           <Select value={language} onValueChange={setLanguage}>
-            <SelectTrigger className="w-[140px] bg-white/10 border-white/20 text-white">
+            <SelectTrigger className="w-[140px] bg-white border-gray-200">
               <div className="flex items-center gap-2">
                 <Globe className="h-4 w-4" />
                 <SelectValue>

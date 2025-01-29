@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Upload, Camera, CheckCircle, ArrowLeft, ArrowRight, Wallet, Clock3, User, Shield, Check } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Label } from "@/components/ui/label";
@@ -25,10 +27,12 @@ const stepIndicators = [
 export const VerificationForm = () => {
   const { toast } = useToast();
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const [kycStep, setKycStep] = useState(1);
   const [walletAddress, setWalletAddress] = useState<string>("");
   const [showCamera, setShowCamera] = useState(false);
   const [kycData, setKycData] = useState({
+    documentType: "id_card",
     firstName: "",
     lastName: "",
     dateOfBirth: "",
@@ -97,7 +101,7 @@ export const VerificationForm = () => {
     }
 
     if (kycStep === 2) {
-      if (!kycData.documentNumber || !kycData.documentExpiry) {
+      if (!kycData.documentType || !kycData.documentNumber || !kycData.documentExpiry) {
         toast({
           title: t("missing.info"),
           description: t("fill.required"),
@@ -168,7 +172,7 @@ export const VerificationForm = () => {
       <div className="space-y-6">
         <div className="relative w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
           <div 
-            className="absolute top-0 left-0 h-full bg-blue-500 transition-all duration-500 ease-in-out"
+            className="absolute top-0 left-0 h-full bg-primary transition-all duration-500 ease-in-out"
             style={{ width: `${(kycStep / 5) * 100}%` }}
           ></div>
         </div>
@@ -178,11 +182,11 @@ export const VerificationForm = () => {
             {stepIndicators.map(({ icon: Icon, label, step }) => (
               <div 
                 key={`step-${step}`}
-                className={`flex flex-col items-center ${kycStep >= step ? 'text-blue-500' : 'text-gray-400'}`}
+                className={`flex flex-col items-center ${kycStep >= step ? 'text-primary' : 'text-gray-400'}`}
               >
                 <Tooltip delayDuration={100}>
                   <TooltipTrigger asChild>
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-2 ${kycStep >= step ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-2 ${kycStep >= step ? 'bg-primary text-white' : 'bg-gray-200'}`}>
                       <Icon className="w-4 h-4" />
                     </div>
                   </TooltipTrigger>
@@ -258,6 +262,34 @@ export const VerificationForm = () => {
             <h2 className="text-2xl font-bold">{t("id.verification")}</h2>
             
             <div className="bg-blue-50 p-4 rounded-lg mb-6">
+              <div className="space-y-2 mb-4">
+                <Label>{t("document.type")}</Label>
+                <RadioGroup
+                  value={kycData.documentType}
+                  onValueChange={(value) => setKycData({ ...kycData, documentType: value })}
+                >
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <RadioGroupItem value="id_card" id="id_card" className="peer sr-only" />
+                      <Label
+                        htmlFor="id_card"
+                        className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
+                      >
+                        <span>{t("id.card")}</span>
+                      </Label>
+                    </div>
+                    <div>
+                      <RadioGroupItem value="passport" id="passport" className="peer sr-only" />
+                      <Label
+                        htmlFor="passport"
+                        className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
+                      >
+                        <span>{t("passport")}</span>
+                      </Label>
+                    </div>
+                  </div>
+                </RadioGroup>
+              </div>
               <h3 className="font-semibold mb-2">{t("document.guidelines")}</h3>
               <ul className="list-disc list-inside space-y-2 text-sm text-gray-700">
                 <li>{t("doc.instruction.1")}</li>
@@ -285,7 +317,7 @@ export const VerificationForm = () => {
               </div>
 
               <div 
-                className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-blue-500 transition-colors"
+                className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-primary transition-colors"
                 onClick={() => document.getElementById('idFront')?.click()}
               >
                 <Upload className="mx-auto h-12 w-12 text-gray-400" />
@@ -307,7 +339,7 @@ export const VerificationForm = () => {
               )}
 
               <div 
-                className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-blue-500 transition-colors"
+                className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-primary transition-colors"
                 onClick={() => document.getElementById('idBack')?.click()}
               >
                 <Upload className="mx-auto h-12 w-12 text-gray-400" />
@@ -372,7 +404,7 @@ export const VerificationForm = () => {
             )}
 
             <div 
-              className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-blue-500 transition-colors"
+              className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-primary transition-colors"
               onClick={() => setShowCamera(true)}
             >
               <Camera className="mx-auto h-12 w-12 text-gray-400" />
@@ -453,6 +485,13 @@ export const VerificationForm = () => {
               <p className="text-sm text-gray-600">
                 {t("reward.address.label")} {walletAddress}
               </p>
+              <Button 
+                onClick={() => navigate('/')} 
+                className="mt-4 w-full"
+                variant="outline"
+              >
+                {t("close")}
+              </Button>
             </div>
           </div>
         )}
