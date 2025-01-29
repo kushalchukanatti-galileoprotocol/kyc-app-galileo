@@ -119,7 +119,8 @@ const translations: Record<"en" | "fr", TranslationType> = {
     "selfie.instruction.5": "Avoid dark or cluttered backgrounds",
     "take.selfie": "Take a selfie for verification",
     "min.age": "Minimum Age Required",
-    "age.requirement": "You must be at least 18 years old to continue."
+    "age.requirement": "You must be at least 18 years old to continue.",
+    "step.completed": "Step completed successfully"
   },
   fr: {
     // Header
@@ -229,7 +230,8 @@ const translations: Record<"en" | "fr", TranslationType> = {
     "selfie.instruction.5": "Évitez les arrière-plans trop sombres ou encombrés",
     "take.selfie": "Prenez un selfie pour la vérification",
     "min.age": "Âge minimum requis",
-    "age.requirement": "Vous devez avoir au moins 18 ans pour continuer."
+    "age.requirement": "Vous devez avoir au moins 18 ans pour continuer.",
+    "step.completed": "Étape complétée avec succès"
   }
 };
 

@@ -3,12 +3,15 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Upload, Camera, CheckCircle, ArrowLeft, ArrowRight, Wallet, Clock3, User, Shield, Check } from "lucide-react";
+import { Camera, CheckCircle, ArrowLeft, ArrowRight, Wallet, Clock3, User, Shield, Check } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { CameraCapture } from "./CameraCapture";
+import { saveKYCVerification } from "@/lib/supabase";
+import { validateEVMAddress, validateAge, validatePhoneNumber } from "@/lib/validations";
 import {
   Tooltip,
   TooltipContent,
@@ -28,6 +31,7 @@ export const VerificationForm = () => {
   const { toast } = useToast();
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [kycStep, setKycStep] = useState(1);
   const [walletAddress, setWalletAddress] = useState<string>("");
   const [showCamera, setShowCamera] = useState(false);
@@ -36,7 +40,7 @@ export const VerificationForm = () => {
     firstName: "",
     lastName: "",
     dateOfBirth: "",
-    email: "",
+    email: user?.email || "",
     phone: "",
     documentNumber: "",
     documentExpiry: "",
@@ -46,110 +50,103 @@ export const VerificationForm = () => {
     selfie: null as File | null,
   });
 
-  const validatePhoneNumber = (phone: string) => {
-    const cleanedNumber = phone.replace(/[^\d+]/g, '');
-    const numberWithoutPlus = cleanedNumber.replace(/^\+/, '');
-    return numberWithoutPlus.length >= 10 && numberWithoutPlus.length <= 12;
+  const showError = (message: string) => {
+    toast({
+      variant: "destructive",
+      title: "Error",
+      description: message,
+    });
   };
 
-  const validateEVMAddress = (address: string) => {
-    const evmAddressRegex = /^0x[a-fA-F0-9]{40}$/;
-    return evmAddressRegex.test(address);
+  const showSuccess = (message: string) => {
+    toast({
+      variant: "default",
+      title: "Success",
+      description: message,
+    });
   };
 
-  const validateAge = (birthDate: string) => {
-    const today = new Date();
-    const birth = new Date(birthDate);
-    let age = today.getFullYear() - birth.getFullYear();
-    const monthDiff = today.getMonth() - birth.getMonth();
-    
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-      age--;
-    }
-    
-    return age >= 18;
-  };
-
-  const handleKycNext = () => {
+  const handleKycNext = async () => {
     if (kycStep === 1) {
       if (!kycData.firstName || !kycData.lastName || !kycData.dateOfBirth || !kycData.email || !kycData.phone) {
-        toast({
-          title: t("missing.info"),
-          description: t("fill.required"),
-          variant: "destructive",
-        });
+        showError(t("fill.required"));
         return;
       }
 
       if (!validateAge(kycData.dateOfBirth)) {
-        toast({
-          title: t("min.age"),
-          description: t("age.requirement"),
-          variant: "destructive",
-        });
+        showError(t("age.requirement"));
         return;
       }
 
       if (!validatePhoneNumber(kycData.phone)) {
-        toast({
-          title: t("invalid.phone"),
-          description: t("phone.format"),
-          variant: "destructive",
-        });
+        showError(t("phone.format"));
         return;
       }
     }
 
     if (kycStep === 2) {
       if (!kycData.documentType || !kycData.documentNumber || !kycData.documentExpiry) {
-        toast({
-          title: t("missing.info"),
-          description: t("fill.required"),
-          variant: "destructive",
-        });
+        showError(t("fill.required"));
         return;
       }
 
       if (!kycData.idFront || !kycData.idBack) {
-        toast({
-          title: t("missing.info"),
-          description: t("doc.instruction.1"),
-          variant: "destructive",
-        });
+        showError(t("doc.instruction.1"));
         return;
       }
     }
 
     if (kycStep === 3 && !kycData.selfie) {
-      toast({
-        title: t("missing.info"),
-        description: t("selfie.instruction.1"),
-        variant: "destructive",
-      });
+      showError(t("selfie.instruction.1"));
       return;
     }
 
     if (kycStep === 4) {
       if (!walletAddress) {
-        toast({
-          title: t("missing.info"),
-          description: t("wallet.instruction.1"),
-          variant: "destructive",
-        });
+        showError(t("wallet.instruction.1"));
         return;
       }
       
       if (!validateEVMAddress(walletAddress)) {
-        toast({
-          title: t("invalid.address"),
-          description: t("wallet.instruction.2"),
-          variant: "destructive",
-        });
+        showError(t("wallet.instruction.2"));
         return;
       }
-    }
 
-    setKycStep(kycStep + 1);
+      // Prepare verification data
+      const verificationData = {
+        firstName: kycData.firstName,
+        lastName: kycData.lastName,
+        dateOfBirth: kycData.dateOfBirth,
+        email: kycData.email,
+        phone: kycData.phone,
+        documentType: kycData.documentType,
+        documentNumber: kycData.documentNumber,
+        documentExpiry: kycData.documentExpiry,
+        walletAddress
+      };
+
+      // Prepare documents
+      const documents = {
+        id_front: kycData.idFront,
+        id_back: kycData.idBack,
+        selfie: kycData.selfie
+      };
+
+      try {
+        if (!user) throw new Error('No user found');
+        
+        await saveKYCVerification(user.id, verificationData, documents);
+        setKycStep(kycStep + 1);
+      } catch (error: any) {
+        showError(error.message || 'Failed to submit verification');
+        return;
+      }
+    } else {
+      setKycStep(kycStep + 1);
+      if (kycStep < 4) {
+        showSuccess(t("step.completed"));
+      }
+    }
   };
 
   const handleKycBack = () => {
@@ -160,10 +157,7 @@ export const VerificationForm = () => {
     const file = event.target.files?.[0];
     if (file) {
       setKycData({ ...kycData, [type]: file });
-      toast({
-        title: t("file.uploaded"),
-        description: t("file.success"),
-      });
+      showSuccess(t("file.success"));
     }
   };
 
@@ -197,7 +191,7 @@ export const VerificationForm = () => {
                     <p>{t(label)}</p>
                   </TooltipContent>
                 </Tooltip>
-                <span className="text-xs hidden md:block">{t(label)}</span>
+                <span className="text-xs hidden md:block text-center w-full">{t(label)}</span>
               </div>
             ))}
           </TooltipProvider>
@@ -316,48 +310,82 @@ export const VerificationForm = () => {
                 />
               </div>
 
-              <div 
-                className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-primary transition-colors"
-                onClick={() => document.getElementById('idFront')?.click()}
-              >
-                <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                <p className="mt-2 font-medium">{t("id.card.front")}</p>
-                <p className="text-sm text-gray-500 mt-1">{t("id.card.front.hint")}</p>
-                <input
-                  id="idFront"
-                  type="file"
-                  className="hidden"
-                  accept="image/*"
-                  onChange={(e) => handleFileUpload(e, 'idFront')}
-                />
-              </div>
-              {kycData.idFront && (
-                <p className="text-sm text-green-600 flex items-center">
-                  <CheckCircle className="w-4 h-4 mr-2" />
-                  {t("document.uploaded")}: {kycData.idFront.name}
-                </p>
+              {!kycData.idFront ? (
+                <div 
+                  className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-primary transition-colors"
+                  onClick={() => document.getElementById('idFront')?.click()}
+                >
+                  <Camera className="mx-auto h-12 w-12 text-gray-400" />
+                  <p className="mt-2 font-medium">{t("id.card.front")}</p>
+                  <p className="text-sm text-gray-500 mt-1">{t("id.card.front.hint")}</p>
+                  <input
+                    id="idFront"
+                    type="file"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={(e) => handleFileUpload(e, 'idFront')}
+                  />
+                </div>
+              ) : (
+                <div className="p-4 border border-gray-200 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="w-5 h-5 text-green-500" />
+                      <div>
+                        <p className="font-medium">{t("id.card.front")}</p>
+                        <p className="text-sm text-gray-500">{kycData.idFront.name}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setKycData({ ...kycData, idFront: null })}
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  </div>
+                </div>
               )}
 
-              <div 
-                className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-primary transition-colors"
-                onClick={() => document.getElementById('idBack')?.click()}
-              >
-                <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                <p className="mt-2 font-medium">{t("id.card.back")}</p>
-                <p className="text-sm text-gray-500 mt-1">{t("id.card.back.hint")}</p>
-                <input
-                  id="idBack"
-                  type="file"
-                  className="hidden"
-                  accept="image/*"
-                  onChange={(e) => handleFileUpload(e, 'idBack')}
-                />
-              </div>
-              {kycData.idBack && (
-                <p className="text-sm text-green-600 flex items-center">
-                  <CheckCircle className="w-4 h-4 mr-2" />
-                  {t("document.uploaded")}: {kycData.idBack.name}
-                </p>
+              {!kycData.idBack ? (
+                <div 
+                  className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-primary transition-colors"
+                  onClick={() => document.getElementById('idBack')?.click()}
+                >
+                  <Camera className="mx-auto h-12 w-12 text-gray-400" />
+                  <p className="mt-2 font-medium">{t("id.card.back")}</p>
+                  <p className="text-sm text-gray-500 mt-1">{t("id.card.back.hint")}</p>
+                  <input
+                    id="idBack"
+                    type="file"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={(e) => handleFileUpload(e, 'idBack')}
+                  />
+                </div>
+              ) : (
+                <div className="p-4 border border-gray-200 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="w-5 h-5 text-green-500" />
+                      <div>
+                        <p className="font-medium">{t("id.card.back")}</p>
+                        <p className="text-sm text-gray-500">{kycData.idBack.name}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setKycData({ ...kycData, idBack: null })}
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  </div>
+                </div>
               )}
             </div>
 
@@ -394,28 +422,42 @@ export const VerificationForm = () => {
                 onCapture={(file) => {
                   setKycData({ ...kycData, selfie: file });
                   setShowCamera(false);
-                  toast({
-                    title: t("file.uploaded"),
-                    description: t("file.success"),
-                  });
+                  showSuccess(t("file.success"));
                 }}
                 onClose={() => setShowCamera(false)}
               />
             )}
 
-            <div 
-              className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-primary transition-colors"
-              onClick={() => setShowCamera(true)}
-            >
-              <Camera className="mx-auto h-12 w-12 text-gray-400" />
-              <p className="mt-2 font-medium">{t("take.selfie")}</p>
-              <p className="text-sm text-gray-500 mt-1">{t("selfie.hint")}</p>
-            </div>
-            {kycData.selfie && (
-              <p className="text-sm text-green-600 flex items-center">
-                <CheckCircle className="w-4 h-4 mr-2" />
-                {t("document.uploaded")}: {kycData.selfie.name}
-              </p>
+            {!kycData.selfie ? (
+              <div 
+                className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-primary transition-colors"
+                onClick={() => setShowCamera(true)}
+              >
+                <Camera className="mx-auto h-12 w-12 text-gray-400" />
+                <p className="mt-2 font-medium">{t("take.selfie")}</p>
+                <p className="text-sm text-gray-500 mt-1">{t("selfie.hint")}</p>
+              </div>
+            ) : (
+              <div className="p-4 border border-gray-200 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5 text-green-500" />
+                    <div>
+                      <p className="font-medium">{t("take.selfie")}</p>
+                      <p className="text-sm text-gray-500">{kycData.selfie.name}</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setKycData({ ...kycData, selfie: null })}
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+              </div>
             )}
 
             <div className="flex gap-4">

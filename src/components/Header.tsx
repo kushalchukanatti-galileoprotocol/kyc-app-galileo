@@ -9,12 +9,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "./ui/button";
+import { supabase } from "@/lib/supabase";
 
 export const Header = () => {
   const location = useLocation();
   const { language, setLanguage, t } = useLanguage();
+  const { user } = useAuth();
 
   const isActive = (path: string) => location.pathname === path;
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+  };
 
   return (
     <header className="w-full bg-white py-4 shadow-sm">
@@ -23,7 +31,7 @@ export const Header = () => {
           <img 
             src="/galileo-logo.svg" 
             alt="Galileo" 
-            className="h-8"
+            className="h-6 md:h-8"
           />
         </Link>
 
@@ -63,6 +71,12 @@ export const Header = () => {
               <SelectItem value="fr">Français</SelectItem>
             </SelectContent>
           </Select>
+
+          {user && (
+            <Button variant="outline" onClick={handleSignOut}>
+              Sign Out
+            </Button>
+          )}
         </div>
       </div>
     </header>
