@@ -58,10 +58,10 @@ export const Header = () => {
           </nav>
 
           <Select value={language} onValueChange={setLanguage}>
-            <SelectTrigger className="w-[140px] bg-white border-gray-200">
+            <SelectTrigger className="w-[140px] bg-white border-gray-200 md:w-[140px]">
               <div className="flex items-center gap-2">
                 <Globe className="h-4 w-4" />
-                <SelectValue>
+                <SelectValue className="hidden md:inline">
                   {language === "en" ? "English" : "Français"}
                 </SelectValue>
               </div>

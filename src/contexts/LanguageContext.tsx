@@ -27,6 +27,8 @@ const translations: Record<"en" | "fr", TranslationType> = {
     // Company Info
     "company.info": "Company Information",
     "company.name": "Company Name",
+    "company.type": "Company Type",
+    "company.registration": "Company Registration",
     "registration.number": "Registration Number",
     "vat.number": "VAT Number (optional)",
     "incorporation.date": "Date of Incorporation",
@@ -35,6 +37,7 @@ const translations: Record<"en" | "fr", TranslationType> = {
     
     // Address
     "company.address": "Company Address",
+    "documents.upload": "Documents Upload",
     "street.address": "Street Address",
     "city": "City",
     "postal.code": "Postal Code",
@@ -84,6 +87,9 @@ const translations: Record<"en" | "fr", TranslationType> = {
     "invalid.address": "Invalid Address Format",
     "file.uploaded": "File Uploaded",
     "file.success": "Your document has been uploaded successfully.",
+    "submitting": "Submitting...",
+    "verification.failed": "Verification submission failed. Please try again.",
+    "submission.failed": "Form submission failed. Please try again.",
     
     // Confirmation
     "verification.submitted": "Verification Submitted",
@@ -141,11 +147,13 @@ const translations: Record<"en" | "fr", TranslationType> = {
     "registration.number": "Numéro d'enregistrement",
     "vat.number": "Numéro de TVA (optionnel)",
     "incorporation.date": "Date de création",
+    "company.type": "Type d'entreprise",
     "llc": "SARL",
     "corporation": "SA",
     
     // Address
     "company.address": "Adresse de l'entreprise",
+    "documents.upload": "Téléchargement de documents",
     "street.address": "Adresse",
     "city": "Ville",
     "postal.code": "Code postal",
@@ -195,6 +203,9 @@ const translations: Record<"en" | "fr", TranslationType> = {
     "invalid.address": "Format d'adresse invalide",
     "file.uploaded": "Fichier téléchargé",
     "file.success": "Votre document a été téléchargé avec succès.",
+    "submitting": "Envoi en cours...",
+    "verification.failed": "L'envoi de la vérification a échoué. Veuillez réessayer.",
+    "submission.failed": "L'envoi du formulaire a échoué. Veuillez réessayer.",
     
     // Confirmation
     "verification.submitted": "Vérification soumise",

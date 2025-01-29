@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Camera, CheckCircle, ArrowLeft, ArrowRight, Wallet, Clock3, User, Shield, Check } from "lucide-react";
+import { Camera, CheckCircle, ArrowLeft, ArrowRight, Wallet, Clock3, User, Shield, Check, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -18,13 +18,14 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Progress } from "@/components/ui/progress";
 
 const stepIndicators = [
-  { icon: User, label: "personal.info", step: 1 },
-  { icon: Shield, label: "id.verification", step: 2 },
-  { icon: Camera, label: "selfie.verification", step: 3 },
-  { icon: Wallet, label: "reward.address", step: 4 },
-  { icon: Check, label: "verification.submitted", step: 5 },
+  { id: 1, icon: User, label: "personal.info", step: 1 },
+  { id: 2, icon: Shield, label: "id.verification", step: 2 },
+  { id: 3, icon: Camera, label: "selfie.verification", step: 3 },
+  { id: 4, icon: Wallet, label: "reward.address", step: 4 },
+  { id: 5, icon: Check, label: "verification.submitted", step: 5 },
 ];
 
 export const VerificationForm = () => {
@@ -35,6 +36,8 @@ export const VerificationForm = () => {
   const [kycStep, setKycStep] = useState(1);
   const [walletAddress, setWalletAddress] = useState<string>("");
   const [showCamera, setShowCamera] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [kycData, setKycData] = useState({
     documentType: "id_card",
     firstName: "",
@@ -64,6 +67,20 @@ export const VerificationForm = () => {
       title: "Success",
       description: message,
     });
+  };
+
+  const simulateProgress = () => {
+    setUploadProgress(0);
+    const interval = setInterval(() => {
+      setUploadProgress((prev) => {
+        if (prev >= 95) {
+          clearInterval(interval);
+          return prev;
+        }
+        return prev + 5;
+      });
+    }, 200);
+    return interval;
   };
 
   const handleKycNext = async () => {
@@ -112,32 +129,43 @@ export const VerificationForm = () => {
         return;
       }
 
-      // Prepare verification data
-      const verificationData = {
-        firstName: kycData.firstName,
-        lastName: kycData.lastName,
-        dateOfBirth: kycData.dateOfBirth,
-        email: kycData.email,
-        phone: kycData.phone,
-        documentType: kycData.documentType,
-        documentNumber: kycData.documentNumber,
-        documentExpiry: kycData.documentExpiry,
-        walletAddress
-      };
-
-      // Prepare documents
-      const documents = {
-        id_front: kycData.idFront,
-        id_back: kycData.idBack,
-        selfie: kycData.selfie
-      };
+      setIsSubmitting(true);
+      const progressInterval = simulateProgress();
 
       try {
         if (!user) throw new Error('No user found');
         
+        // Prepare verification data
+        const verificationData = {
+          firstName: kycData.firstName,
+          lastName: kycData.lastName,
+          dateOfBirth: kycData.dateOfBirth,
+          email: kycData.email,
+          phone: kycData.phone,
+          documentType: kycData.documentType,
+          documentNumber: kycData.documentNumber,
+          documentExpiry: kycData.documentExpiry,
+          walletAddress
+        };
+
+        // Prepare documents
+        const documents = {
+          id_front: kycData.idFront,
+          id_back: kycData.idBack,
+          selfie: kycData.selfie
+        };
+        
         await saveKYCVerification(user.id, verificationData, documents);
-        setKycStep(kycStep + 1);
+        setUploadProgress(100);
+        clearInterval(progressInterval);
+        setTimeout(() => {
+          setKycStep(kycStep + 1);
+          setIsSubmitting(false);
+        }, 500);
       } catch (error: any) {
+        clearInterval(progressInterval);
+        setIsSubmitting(false);
+        setUploadProgress(0);
         showError(error.message || 'Failed to submit verification');
         return;
       }
@@ -173,9 +201,9 @@ export const VerificationForm = () => {
 
         <div className="flex justify-between mb-8">
           <TooltipProvider>
-            {stepIndicators.map(({ icon: Icon, label, step }) => (
+            {stepIndicators.map(({ id, icon: Icon, label, step }) => (
               <div 
-                key={`step-${step}`}
+                key={id}
                 className={`flex flex-col items-center ${kycStep >= step ? 'text-primary' : 'text-gray-400'}`}
               >
                 <Tooltip delayDuration={100}>
@@ -488,20 +516,49 @@ export const VerificationForm = () => {
                 value={walletAddress}
                 onChange={(e) => setWalletAddress(e.target.value)}
                 className="font-mono"
+                disabled={isSubmitting}
               />
               <p className="text-sm text-gray-500">
                 {t("wallet.format.hint")}
               </p>
             </div>
 
+            {isSubmitting && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm text-gray-500">
+                  <span>Uploading verification data...</span>
+                  <span>{uploadProgress}%</span>
+                </div>
+                <Progress value={uploadProgress} className="h-2" />
+              </div>
+            )}
+
             <div className="flex gap-4">
-              <Button onClick={handleKycBack} variant="outline" className="flex-1 group">
+              <Button 
+                onClick={handleKycBack} 
+                variant="outline" 
+                className="flex-1 group"
+                disabled={isSubmitting}
+              >
                 <ArrowLeft className="mr-2 group-hover:-translate-x-1 transition-transform" />
                 {t("back")}
               </Button>
-              <Button onClick={handleKycNext} className="flex-1 group">
-                {t("submit")}
-                <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
+              <Button 
+                onClick={handleKycNext} 
+                className="flex-1 group"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {t("submitting")}
+                  </>
+                ) : (
+                  <>
+                    {t("submit")}
+                    <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
+                  </>
+                )}
               </Button>
             </div>
           </div>

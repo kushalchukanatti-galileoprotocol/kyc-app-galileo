@@ -16,22 +16,42 @@ export const uploadFile = async (
   path: string
 ): Promise<string | null> => {
   try {
+    console.log(`Uploading file to ${bucket}/${path}`);
+
+    // First check if the bucket exists
+    const { data: bucketExists } = await supabase.storage.getBucket(bucket);
+    
+    if (!bucketExists) {
+      console.log('Bucket does not exist, creating...');
+      const { error: createError } = await supabase.storage.createBucket(bucket, {
+        public: false,
+        fileSizeLimit: 10485760, // 10MB
+        allowedMimeTypes: ['image/jpeg', 'image/png', 'application/pdf']
+      });
+      
+      if (createError) {
+        console.error('Error creating bucket:', createError);
+        throw createError;
+      }
+    }
+
+    // Upload the file
     const { data, error } = await supabase.storage
       .from(bucket)
       .upload(path, file, {
         cacheControl: '3600',
-        upsert: false
+        upsert: true
       });
 
     if (error) {
       console.error('Error uploading file:', error);
-      return null;
+      throw error;
     }
 
     return data.path;
   } catch (error) {
-    console.error('Error uploading file:', error);
-    return null;
+    console.error('Error in uploadFile:', error);
+    throw error; // Re-throw to handle in the calling function
   }
 };
 
@@ -39,9 +59,11 @@ export const uploadFile = async (
 export const saveKYCVerification = async (
   userId: string,
   data: any,
-  documents: { [key: string]: File }
+  documents: { [key: string]: File | null }
 ) => {
   try {
+    console.log('Starting KYC verification for user:', userId);
+
     // Start by creating the KYC verification record
     const { data: verification, error: verificationError } = await supabase
       .from('kyc_verifications')
@@ -61,32 +83,53 @@ export const saveKYCVerification = async (
       .select()
       .single();
 
-    if (verificationError) throw verificationError;
+    if (verificationError) {
+      console.error('Error creating verification record:', verificationError);
+      throw verificationError;
+    }
+
+    console.log('Created verification record:', verification.id);
 
     // Upload documents and create document records
     const documentUploads = Object.entries(documents).map(async ([type, file]) => {
-      const path = `${userId}/${verification.id}/${type}/${file.name}`;
-      const filePath = await uploadFile(file, 'verifications', path);
+      if (!file) {
+        console.log(`No file provided for ${type}, skipping`);
+        return null;
+      }
 
-      if (!filePath) throw new Error(`Failed to upload ${type} document`);
+      try {
+        const path = `${userId}/${verification.id}/${type}/${file.name}`;
+        console.log(`Uploading ${type} document:`, path);
+        
+        const filePath = await uploadFile(file, 'verifications', path);
+        if (!filePath) {
+          throw new Error(`Failed to upload ${type} document`);
+        }
 
-      return supabase
-        .from('verification_documents')
-        .insert([{
-          kyc_verification_id: verification.id,
-          document_type: type,
-          file_path: filePath,
-          file_name: file.name,
-          file_size: file.size,
-          mime_type: file.type
-        }]);
+        console.log(`Successfully uploaded ${type} document:`, filePath);
+
+        return supabase
+          .from('verification_documents')
+          .insert([{
+            kyc_verification_id: verification.id,
+            document_type: type,
+            file_path: filePath,
+            file_name: file.name,
+            file_size: file.size,
+            mime_type: file.type
+          }]);
+      } catch (error) {
+        console.error(`Error uploading ${type} document:`, error);
+        throw error;
+      }
     });
 
-    await Promise.all(documentUploads);
+    const uploadResults = await Promise.all(documentUploads.filter(Boolean));
+    console.log('All documents uploaded successfully');
 
     return verification;
   } catch (error) {
-    console.error('Error saving KYC verification:', error);
+    console.error('Error in saveKYCVerification:', error);
     throw error;
   }
 };
@@ -127,7 +170,7 @@ export const saveKYBVerification = async (
 
     // Upload documents and create document records
     const documentUploads = Object.entries(documents).map(async ([type, file]) => {
-      if (!file) return null; // Skip if no file
+      if (!file) return null;
 
       const path = `${userId}/${verification.id}/${type}/${file.name}`;
       const filePath = await uploadFile(file, 'verifications', path);
