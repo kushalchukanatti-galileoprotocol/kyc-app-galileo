@@ -58,7 +58,7 @@ export const Header = () => {
           </nav>
 
           <Select value={language} onValueChange={setLanguage}>
-            <SelectTrigger className="w-[140px] bg-white border-gray-200 md:w-[140px]">
+            <SelectTrigger className="w-[40px] md:w-[140px] bg-white border-gray-200">
               <div className="flex items-center gap-2">
                 <Globe className="h-4 w-4" />
                 <SelectValue className="hidden md:inline">
@@ -66,7 +66,7 @@ export const Header = () => {
                 </SelectValue>
               </div>
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent align="end">
               <SelectItem value="en">English</SelectItem>
               <SelectItem value="fr">Français</SelectItem>
             </SelectContent>
