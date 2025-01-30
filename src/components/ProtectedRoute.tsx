@@ -23,20 +23,20 @@ export const ProtectedRoute = ({ children, verificationType }: ProtectedRoutePro
     return <Navigate to="/" replace />;
   }
 
-  // If user has already completed either verification, redirect to home
-  if (verificationStatus?.hasKYC || verificationStatus?.hasKYB) {
-    return <Navigate to="/" replace />;
-  }
+  // Remove the redirection logic for existing verifications
+  // if (verificationStatus?.hasKYC || verificationStatus?.hasKYB) {
+  //   return <Navigate to="/" replace />;
+  // }
 
   // If trying to access KYC but already has KYB verification
-  if (verificationType === 'kyc' && verificationStatus?.hasKYB) {
-    return <Navigate to="/" replace />;
-  }
+  // if (verificationType === 'kyc' && verificationStatus?.hasKYB) {
+  //   return <Navigate to="/" replace />;
+  // }
 
   // If trying to access KYB but already has KYC verification
-  if (verificationType === 'kyb' && verificationStatus?.hasKYC) {
-    return <Navigate to="/" replace />;
-  }
+  // if (verificationType === 'kyb' && verificationStatus?.hasKYC) {
+  //   return <Navigate to="/" replace />;
+  // }
 
   return <>{children}</>;
 };

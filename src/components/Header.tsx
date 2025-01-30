@@ -62,13 +62,21 @@ export const Header = () => {
               <div className="flex items-center gap-2">
                 <Globe className="h-4 w-4" />
                 <SelectValue className="hidden md:inline">
-                  {language === "en" ? "English" : "Français"}
+                  <span className="hidden md:inline">
+                    {language === "en" ? "English" : "French"}
+                  </span>
                 </SelectValue>
               </div>
             </SelectTrigger>
             <SelectContent align="end">
-              <SelectItem value="en">English</SelectItem>
-              <SelectItem value="fr">Français</SelectItem>
+              <SelectItem value="en">
+                <span className="md:hidden">English</span>
+                <span className="hidden md:inline">English</span>
+              </SelectItem>
+              <SelectItem value="fr">
+                <span className="md:hidden">Français</span>
+                <span className="hidden md:inline">Français</span>
+              </SelectItem>
             </SelectContent>
           </Select>
 

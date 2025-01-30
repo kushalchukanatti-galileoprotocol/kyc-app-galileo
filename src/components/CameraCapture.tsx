@@ -21,8 +21,8 @@ export const CameraCapture = ({ onCapture, onClose }: CameraCaptureProps) => {
         const mediaStream = await navigator.mediaDevices.getUserMedia({
           video: {
             facingMode: "user",
-            width: { ideal: 1280 },
-            height: { ideal: 720 }
+            width: { ideal: 720 },
+            height: { ideal: 1280 }
           }
         });
         setStream(mediaStream);
@@ -71,7 +71,7 @@ export const CameraCapture = ({ onCapture, onClose }: CameraCaptureProps) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full relative">
+      <div className="bg-white rounded-lg shadow-xl w-full h-full md:h-auto md:max-w-2xl relative">
         <Button
           variant="ghost"
           size="icon"
@@ -81,7 +81,7 @@ export const CameraCapture = ({ onCapture, onClose }: CameraCaptureProps) => {
           <X className="h-4 w-4" />
         </Button>
 
-        <div className="p-4">
+        <div className="p-4 h-full flex flex-col">
           <h3 className="text-lg font-semibold mb-2">{t("take.selfie")}</h3>
           
           {error ? (
@@ -89,20 +89,23 @@ export const CameraCapture = ({ onCapture, onClose }: CameraCaptureProps) => {
               {error}
             </div>
           ) : (
-            <div className="space-y-4">
-              <div className="relative aspect-video bg-gray-100 rounded-lg overflow-hidden">
+            <div className="flex flex-col flex-grow space-y-4">
+              <div className="relative flex-grow bg-gray-100 rounded-lg overflow-hidden">
                 <video
                   ref={videoRef}
                   autoPlay
                   playsInline
                   muted
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover md:aspect-video"
+                  style={{
+                    aspectRatio: window.innerWidth <= 768 ? '9/16' : '16/9'
+                  }}
                 />
               </div>
               
               <canvas ref={canvasRef} className="hidden" />
               
-              <div className="flex justify-center">
+              <div className="flex justify-center pb-4">
                 <Button
                   onClick={capturePhoto}
                   className="flex items-center gap-2"
