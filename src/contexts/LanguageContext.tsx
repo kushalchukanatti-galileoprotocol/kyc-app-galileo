@@ -15,6 +15,16 @@ const translations: Record<"en" | "fr", TranslationType> = {
     // Header
     "individual.verification": "Individual Verification",
     "business.verification": "Business Verification",
+
+    // Sign up/sign in
+    "create.account":"Create Account",
+    "sign.in": "Sign In",
+    "sign.up": "Sign Up",
+    "email": "Email",
+    "password":"Password",
+    "loading":"loading",
+    "have.account":"Already have an account? Sign in",
+    "need.account":"Need an account? Sign up",
     
     // KYC Page
     "kyc.title": "Individual Verification (KYC)",
@@ -162,6 +172,16 @@ const translations: Record<"en" | "fr", TranslationType> = {
     "individual.verification": "Vérification Individuelle",
     "business.verification": "Vérification Entreprise",
     
+    // Sign up/ sign in
+    "create.account": "Créer un compte",
+    "sign.in": "Connexion",
+    "sign.up": "Inscrivez-vous",
+    "e-mail": "E-mail",
+    "mot de passe": "Mot de passe",
+    "chargement": "chargement",
+    "have.account": "Vous avez déjà un compte ? Connectez-vous",
+    "need.account": "Besoin d'un compte ? S'inscrire",
+
     // KYC Page
     "kyc.title": "Vérification Individuelle (KYC)",
     "kyc.subtitle": "Complétez votre processus de vérification personnelle de manière sécurisée et facile.",

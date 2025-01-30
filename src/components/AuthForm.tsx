@@ -11,7 +11,7 @@ export const AuthForm = () => {
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [alert, setAlert] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const [alert, setAlert] = useState<{ type: 'error' | 'success', message: string } | null>(null);
   const { t } = useLanguage();
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -26,7 +26,6 @@ export const AuthForm = () => {
           password,
         });
         if (error) throw error;
-        setAlert({ message: "Account created successfully!", type: "success" });
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
@@ -35,7 +34,10 @@ export const AuthForm = () => {
         if (error) throw error;
       }
     } catch (error: any) {
-      setAlert({ message: error.message, type: "error" });
+      setAlert({
+        type: 'error',
+        message: error.message,
+      });
     } finally {
       setLoading(false);
     }
@@ -53,24 +55,24 @@ export const AuthForm = () => {
       <Card className="w-full max-w-md p-6">
         <form onSubmit={handleAuth} className="space-y-4">
           <h2 className="text-2xl font-bold text-center mb-6">
-            {isSignUp ? "Create Account" : "Sign In"}
+            {isSignUp ? t("create.account") : t("sign.in")}
           </h2>
           <Input
             type="email"
-            placeholder="Email"
+            placeholder={t("email")}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
           />
           <Input
             type="password"
-            placeholder="Password"
+            placeholder={t("password")}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
           />
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Loading..." : isSignUp ? "Sign Up" : "Sign In"}
+            {loading ? t("loading") : isSignUp ? t("sign.up") : t("sign.in")}
           </Button>
           <div className="text-center">
             <button
@@ -78,7 +80,7 @@ export const AuthForm = () => {
               onClick={() => setIsSignUp(!isSignUp)}
               className="text-sm text-blue-500 hover:underline"
             >
-              {isSignUp ? "Already have an account? Sign in" : "Need an account? Sign up"}
+              {isSignUp ? t("have.account") : t("need.account")}
             </button>
           </div>
         </form>
